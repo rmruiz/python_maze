@@ -7,8 +7,8 @@ VISITED = 4
 SOUTH = 2
 EAST = 1
 
-DEBUG = True
-STEPBYSTEP = True
+DEBUG = False
+STEPBYSTEP = False
 STEPBYSTEP2 = True
 MARGIN = 5
 
@@ -73,16 +73,18 @@ def cell_has_south_neighbor(i, j):
         return False
     return not cell_was_visited(i, j+1)
 
-def north(i, j): return [i, j-1]
-def south(i, j): return [i, j+1]
-def east(i, j): return [i+1, j]
-def west(i, j): return [i-1, j]
+def north(xy): return [xy[0], xy[1]-1]
+def south(xy): return [xy[0], xy[1]+1]
+def east(xy): return [xy[0]+1, xy[1]]
+def west(xy): return [xy[0]-1, xy[1]]
 
 def remove_wall_between(xi,yi, xf,yf):
-    if(  xf == north(xi,yi)[0] and yf == north(xi,yi)[1]): destroy_north_wall(xi,yi)
-    elif(xf == south(xi,yi)[0] and yf == south(xi,yi)[1]): destroy_south_wall(xi,yi)
-    elif(xf == east(xi,yi)[0]  and yf == east(xi,yi)[1]):  destroy_east_wall(xi,yi)
-    elif(xf == west(xi,yi)[0]  and yf == west(xi,yi)[1]):  destroy_west_wall(xi,yi)
+    xyi=[xi,yi]
+    xyf=[xf,yf]
+    if(  xf == north(xyi)[0] and yf == north(xyi)[1]): destroy_north_wall(xi,yi)
+    elif(xf == south(xyi)[0] and yf == south(xyi)[1]): destroy_south_wall(xi,yi)
+    elif(xf == east(xyi)[0]  and yf == east(xyi)[1]):  destroy_east_wall(xi,yi)
+    elif(xf == west(xyi)[0]  and yf == west(xyi)[1]):  destroy_west_wall(xi,yi)
     else: raise("no match to remove wall!")
     return
 
@@ -144,8 +146,8 @@ def draw_ball(i, j):
     set_fill_color(Color.RED)
     draw_circle(x0, y0, min(cell_width, cell_height)/4 - 2 )
 
-def draw(grid):
-    draw_border(grid)
+def draw():
+    draw_border()
     x_range = range(len(grid[0]))
     y_range = range(len(grid))
 
@@ -156,7 +158,7 @@ def draw(grid):
               draw_ball(i, j)
     return
 
-def draw_border(grid):
+def draw_border():
     set_color(Color.BLACK)
     set_fill_color(Color.WHITE)
     cell_height = floor(max_height/len(grid))
@@ -177,10 +179,11 @@ def has_any_neighbor(x, y):
 
 def next_neighbor(x, y):
     neighbors = []
-    if cell_has_east_neighbor(x, y): neighbors.append(east(x,y))
-    if cell_has_west_neighbor(x, y): neighbors.append(west(x,y))
-    if cell_has_north_neighbor(x, y): neighbors.append(north(x,y))
-    if cell_has_south_neighbor(x, y): neighbors.append(south(x,y))
+    xy=[x,y]
+    if cell_has_east_neighbor(x, y): neighbors.append(east(xy))
+    if cell_has_west_neighbor(x, y): neighbors.append(west(xy))
+    if cell_has_north_neighbor(x, y): neighbors.append(north(xy))
+    if cell_has_south_neighbor(x, y): neighbors.append(south(xy))
     
     next = randint(0, len(neighbors)-1) 
     debug("neighbor selectd: " + str(neighbors[next]))
@@ -190,8 +193,8 @@ grid = []
 solucion = []
 def mainloop():
     global grid, solucion
-    width = 32
-    height = 24
+    width = 64
+    height = 48
     
     grid = make_full_grid(width, height)
     solucion = make_solucion(width, height)
@@ -204,7 +207,7 @@ def mainloop():
     while is_run():
         if(len(stack) == 0): 
             clear_device()
-            draw(grid)
+            draw()
             pause()
             break
         while(len(stack)>0):
@@ -220,50 +223,88 @@ def mainloop():
             if(STEPBYSTEP):
                 delay_fps(1000)            
                 clear_device()
-                draw(grid)
+                draw()
 
-    print("Adding maze to tree")
-
-    tree = build_tree_from([0,0], None)
-
-    
-
-    set_solucion(tree.data[0], tree.data[1], True)
-
+    debug("Solving maze")
+    start_node = [0, 0]
     end_node = [width-1,height-1]
-
-    deep_search(tree, end_node)
+    #tree = build_tree_from(start_node, None)
+    #set_solucion(tree.data, tree.data, True)
+    #deep_search(tree, end_node)
+    stack_search(start_node, end_node)
         
-    draw(grid)
+    draw()
     pause()
-    if(STEPBYSTEP):
-        delay_fps(1000)            
-        #clear_device()
+
+def stack_search(start_node, end_node):
+    stack = []
+    dead_end = []
+    stack.append(start_node)
+
+    found = False
+    set_solucion(start_node, True)
+    
+    while(not found):
+        if(STEPBYSTEP2):
+            draw()
+            delay_fps(1000) 
+        current=stack.pop()
+        set_solucion(current, False)
+        if same(current, end_node):
+            stack.append(current)
+            set_solucion(current, True)
+            found = True
+        else:
+            debug("pushing current " + str(current))
+            stack.append(current)
+            set_solucion(current, True)
+            can_move = False
+            if can_move_north(current[0], current[1]) and north(current) not in stack and north(current) not in dead_end:    
+                debug("pushing current N" + str(north(current)))
+                stack.append(north(current))
+                can_move = True
+            if can_move_south(current[0], current[1]) and south(current) not in stack and south(current) not in dead_end:
+                debug("pushing current S" + str(south(current)))
+                stack.append(south(current))
+                can_move = True
+            if can_move_east(current[0], current[1]) and east(current) not in stack and east(current) not in dead_end:
+                debug("pushing current E" + str(east(current)))
+                stack.append(east(current))
+                can_move = True
+            if can_move_west(current[0], current[1]) and west(current) not in stack and west(current) not in dead_end:
+                debug("pushing current W"+ str(west(current)))
+                stack.append(west(current))
+                can_move = True
+            if not can_move:
+                de = stack.pop()
+                dead_end.append(de)
+                set_solucion(de, False)
+                debug("Dead End " + str(de))
+                
+    return
 
 def deep_search(sub_tree, end_node):
-    draw(grid)
+    draw()
     if(STEPBYSTEP2):
         delay_fps(1000) 
-    print("deep_search over ["+str(sub_tree.data[0])+","+str(sub_tree.data[1])+"]")
+    debug("deep_search over ["+str(sub_tree.data[0])+","+str(sub_tree.data[1])+"]")
     if sub_tree.data[0] == end_node[0] and sub_tree.data[1] == end_node[1]:
         print("Found!")
         return True
     for child in sub_tree.children:
         set_solucion(child.data[0], child.data[1], True)
         if not deep_search(child, end_node): 
-            print("removing ["+str(sub_tree.data[0])+","+str(sub_tree.data[1])+"]")
+            debug("removing ["+str(sub_tree.data[0])+","+str(sub_tree.data[1])+"]")
             set_solucion(child.data[0], child.data[1], False)
         else:
             return True
     return False
 
-
-
 def get_solucion(x, y):
     return solucion[y][x]
 
-def set_solucion(x, y, value):
-    solucion[y][x] = value
+def set_solucion(xy, value):
+    solucion[xy[1]][xy[0]] = value
     return
 
 class Node:
@@ -284,22 +325,22 @@ def build_tree_from(xy, last_visited):
     if can_move_north(xy[0], xy[1]):
         if not same(north(xy[0], xy[1]), last_visited): 
             debug("going north:")
-            print(north(xy[0], xy[1]))
+            debug(north(xy[0], xy[1]))
             node.children.append(build_tree_from(north(xy[0], xy[1]), xy))
     if can_move_south(xy[0], xy[1]):
         if not same(south(xy[0], xy[1]), last_visited): 
             debug("going south:")
-            print(south(xy[0], xy[1]))
+            debug(south(xy[0], xy[1]))
             node.children.append(build_tree_from(south(xy[0], xy[1]), xy))
     if can_move_east(xy[0], xy[1]):
         if not same(east(xy[0], xy[1]), last_visited): 
             debug("going east:")
-            print(east(xy[0], xy[1]))
+            debug(east(xy[0], xy[1]))
             node.children.append(build_tree_from(east(xy[0], xy[1]), xy))
     if can_move_west(xy[0], xy[1]):
         if not same(west(xy[0], xy[1]), last_visited): 
             debug("going west:")
-            print(west(xy[0], xy[1]))
+            debug(west(xy[0], xy[1]))
             node.children.append(build_tree_from(west(xy[0], xy[1]), xy))
     return node
 
