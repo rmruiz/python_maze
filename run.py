@@ -31,41 +31,36 @@ def set_grid(x, y, value):
     grid[y][x] = value
     return
 
-def cell_has_south_wall(i, j):
-    if j == len(grid) - 1: return False 
-    tmp = get_grid(i, j)
+def cell_has_south_wall(pos):
+    if pos.y == len(grid) - 1: return False
+    tmp = get_grid(pos.x, pos.y)
     return True if tmp >= SOUTH else False
 
-def cell_has_east_wall(i, j):
-    if i == len(grid[0]) - 1: return False 
-    tmp = get_grid(i, j)
+def cell_has_east_wall(pos):
+    if pos.x == len(grid[0]) - 1: return False 
+    tmp = get_grid(pos.x, pos.y)
     tmp = tmp - SOUTH if tmp >= SOUTH else tmp
     return True if tmp >= EAST else False
 
 def cell_has_east_neighbor(cell):
     if cell.x == len(grid[0]) - 1: 
         return False
-    return not visitado.get(cell.east())
+    return not maze.visitado.get(cell.east())
 
 def cell_has_west_neighbor(cell):
     if cell.x == 0:
         return False
-    return not visitado.get(cell.west())
+    return not maze.visitado.get(cell.west())
 
 def cell_has_north_neighbor(cell):
     if cell.y == 0: 
         return False
-    return not visitado.get(cell.north())
+    return not maze.visitado.get(cell.north())
 
 def cell_has_south_neighbor(cell):
     if cell.y == len(grid) - 1: 
         return False
-    return not visitado.get(cell.south())
-
-def north(xy): return [xy[0], xy[1]-1]
-def south(xy): return [xy[0], xy[1]+1]
-def east(xy): return [xy[0]+1, xy[1]]
-def west(xy): return [xy[0]-1, xy[1]]
+    return not maze.visitado.get(cell.south())
 
 def remove_wall_between(pos_i, pos_f):
     if   pos_f.is_equal_to(pos_i.north()): destroy_north_wall(pos_i)
@@ -97,6 +92,7 @@ def destroy_west_wall(pos):
     destroy_east_wall(pos.west())
 
 def draw_cell(i, j):
+    pos = Vector(i, j)
     cell_height = floor(max_height/len(grid))
     cell_width = floor(max_width/len(grid[0]))
     x0 = i * cell_width + MARGIN
@@ -104,24 +100,24 @@ def draw_cell(i, j):
     y0 = j * cell_height + MARGIN
     y1 = (j+1) * cell_height + MARGIN
     
-    if cell_has_south_wall(i, j): 
+    if cell_has_south_wall(pos): 
         set_color(Color.DARK_BLUE)
         draw_poly_line(  x0,y1,  x1,y1  )
     else: 
         set_color(Color.WHITE)
         draw_poly_line(  x0,y1,  x1,y1  )
-    if cell_has_east_wall(i, j):
+    if cell_has_east_wall(pos):
         set_color(Color.DARK_BLUE)
         draw_poly_line(  x1,y1,  x1,y0  )
     else: 
         set_color(Color.WHITE)
         draw_poly_line(  x1,y1,  x1,y0  )
 
-def draw_ball(i, j):
+def draw_ball(pos):
     cell_height = floor(max_height/len(grid))
     cell_width = floor(max_width/len(grid[0]))
-    x0 = i * cell_width + MARGIN + cell_width/2
-    y0 = j * cell_height + MARGIN + cell_height/2
+    x0 = pos.x * cell_width + MARGIN + cell_width/2
+    y0 = pos.y * cell_height + MARGIN + cell_height/2
     set_color(Color.RED)
     set_fill_color(Color.RED)
     draw_circle(x0, y0, min(cell_width, cell_height)/4 - 2 )
@@ -135,8 +131,8 @@ def draw():
         for j in y_range:
             pos = Vector(i, j)
             draw_cell(i, j)
-            if solucion.get(pos): 
-                draw_ball(i, j)
+            if maze.solucion.get(pos): 
+                draw_ball(pos)
     return
 
 def draw_border():
@@ -158,40 +154,30 @@ def has_any_neighbor(pos):
     debug("no neighbor found for " + str(pos))
     return False
 
-def next_neighbor(cell):
+def next_neighbor(pos):
     neighbors = []
-    x = cell.x
-    y = cell.y
-    xy=[x,y]
-    if cell_has_east_neighbor(cell): neighbors.append(east(xy))
-    if cell_has_west_neighbor(cell): neighbors.append(west(xy))
-    if cell_has_north_neighbor(cell): neighbors.append(north(xy))
-    if cell_has_south_neighbor(cell): neighbors.append(south(xy))
+    if cell_has_east_neighbor(pos): neighbors.append(pos.east())
+    if cell_has_west_neighbor(pos): neighbors.append(pos.west())
+    if cell_has_north_neighbor(pos): neighbors.append(pos.north())
+    if cell_has_south_neighbor(pos): neighbors.append(pos.south())
     
-    next = randint(0, len(neighbors)-1) 
+    next = randint(0, len(neighbors) - 1) 
     debug("neighbor selected: " + str(neighbors[next]))
-    return Vector(neighbors[next][0], neighbors[next][1])
+    return neighbors[next]
 
+maze = None
 grid = []
-solucion = None
-visitado = None
 def mainloop():
-    global grid, solucion, visitado
-    maze_size = Vector(15, 12)
-    width = maze_size.x
-    height = maze_size.y
-    
-    grid = make_full_grid(width, height)
-    visitado = Grid(maze_size, False)
-    solucion = Grid(maze_size, False)
+    global maze
+    global grid
+    maze_size = Vector(15, 15)  
+    maze = Map(maze_size)
+    grid = make_full_grid(maze_size.x, maze_size.y)
 
-    xi = randint(0, len(grid)-1)
-    yi = len(grid) - 1
-    pos_i = Vector(xi, yi)
+    pos_i = Vector(0, 0)
     stack = []
     stack.append(pos_i)
-    
-    visitado.set(pos_i, True)
+    maze.visitado.set(pos_i, True)
     while is_run():
         if(len(stack) == 0): 
             clear_device()
@@ -205,7 +191,7 @@ def mainloop():
                 stack.append(pos_i)
                 pos_n = next_neighbor(pos_i)
                 remove_wall_between(pos_i, pos_n)
-                visitado.set(pos_n, True)
+                maze.visitado.set(pos_n, True)
                 stack.append(pos_n)
 
             if(STEPBYSTEP):
@@ -227,23 +213,23 @@ def stack_search(start, end):
     stack.append(start)
 
     found = False
-    solucion.set(start, True)
+    maze.solucion.set(start, True)
     
     while(not found):
         if(STEPBYSTEP2):
             draw()
             delay_fps(1000) 
         current=stack.pop()
-        solucion.set(current, False)
+        maze.solucion.set(current, False)
 
         if current.is_equal_to(end):
             stack.append(current)
-            solucion.set(current, True)
+            maze.solucion.set(current, True)
             found = True
         else:
             debug("pushing current " + str(current))
             stack.append(current)
-            solucion.set(current, True)
+            maze.solucion.set(current, True)
             can_move = False
             if can_move_north(current) and not current.north().in_list(stack) and not current.north().in_list(dead_end):
                 debug("pushing current N " + str(current.north()))
@@ -264,7 +250,7 @@ def stack_search(start, end):
             if not can_move:
                 de = stack.pop()
                 dead_end.append(de)
-                solucion.set(de, False)
+                maze.solucion.set(de, False)
                 debug("Dead End: " + str(de))
     return
 

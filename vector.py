@@ -30,8 +30,4 @@ class Vector:
         for v in list:
             if self.is_equal_to(v): return True
         return False
-
-#def north(xy): return [xy[0], xy[1]-1]
-#def south(xy): return [xy[0], xy[1]+1]
-#def east(xy): return [xy[0]+1, xy[1]]
-#def west(xy): return [xy[0]-1, xy[1]]            
+          
