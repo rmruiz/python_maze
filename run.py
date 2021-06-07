@@ -4,6 +4,7 @@ from math import floor
 from time import sleep
 
 from grid import Grid
+from map import Map
 from vector import Vector
 
 VISITED = 4
@@ -176,10 +177,11 @@ def has_any_neighbor(pos):
     debug("no neighbor found for " + str(pos))
     return False
 
-def next_neighbor(x, y):
+def next_neighbor(cell):
     neighbors = []
+    x = cell.x
+    y = cell.y
     xy=[x,y]
-    cell = Vector(x, y)
     if cell_has_east_neighbor(cell): neighbors.append(east(xy))
     if cell_has_west_neighbor(cell): neighbors.append(west(xy))
     if cell_has_north_neighbor(cell): neighbors.append(north(xy))
@@ -187,10 +189,11 @@ def next_neighbor(x, y):
     
     next = randint(0, len(neighbors)-1) 
     debug("neighbor selected: " + str(neighbors[next]))
-    return neighbors[next]
+    return Vector(neighbors[next][0], neighbors[next][1])
 
 grid = []
 solucion = None
+visitado = None
 def mainloop():
     global grid, solucion
     maze_size = Vector(15, 12)
@@ -198,13 +201,15 @@ def mainloop():
     height = maze_size.y
     
     grid = make_full_grid(width, height)
+    visitado = Grid(maze_size, False)
     solucion = Grid(maze_size, False)
 
     xi = randint(0, len(grid)-1)
     yi = len(grid) - 1
-    stack = []
-    stack.append([xi, yi])
     pos_i = Vector(xi, yi)
+    stack = []
+    stack.append(pos_i)
+    
     visit(pos_i)
     while is_run():
         if(len(stack) == 0): 
@@ -214,15 +219,13 @@ def mainloop():
             break
         while(len(stack)>0):
             #sleep(1)
-            xi, yi = stack.pop()
-            pos_i = Vector(xi, yi)
+            pos_i = stack.pop()
             if(has_any_neighbor(pos_i)):
-                stack.append([xi, yi])
-                xn, yn = next_neighbor(xi, yi)
-                pos_n = Vector(xn, yn)
+                stack.append(pos_i)
+                pos_n = next_neighbor(pos_i)
                 remove_wall_between(pos_i, pos_n)
                 visit(pos_n)
-                stack.append([xn, yn])
+                stack.append(pos_n)
 
             if(STEPBYSTEP):
                 delay_fps(1000)            
@@ -249,33 +252,33 @@ def stack_search(start, end):
         if(STEPBYSTEP2):
             draw()
             delay_fps(1000) 
-        curr=stack.pop()
-        solucion.set(curr, False)
+        current=stack.pop()
+        solucion.set(current, False)
 
-        if curr.is_equal_to(end):
-            stack.append(curr)
-            solucion.set(curr, True)
+        if current.is_equal_to(end):
+            stack.append(current)
+            solucion.set(current, True)
             found = True
         else:
-            debug("pushing current " + str(curr))
-            stack.append(curr)
-            solucion.set(curr, True)
+            debug("pushing current " + str(current))
+            stack.append(current)
+            solucion.set(current, True)
             can_move = False
-            if can_move_north(curr) and not curr.north().in_list(stack) and not curr.north().in_list(dead_end):
-                debug("pushing current N " + str(curr.north()))
-                stack.append(curr.north())
+            if can_move_north(current) and not current.north().in_list(stack) and not current.north().in_list(dead_end):
+                debug("pushing current N " + str(current.north()))
+                stack.append(current.north())
                 can_move = True
-            if can_move_south(curr) and not curr.south().in_list(stack) and not curr.south().in_list(dead_end):
-                debug("pushing current S " + str(curr.south()))
-                stack.append(curr.south())
+            if can_move_south(current) and not current.south().in_list(stack) and not current.south().in_list(dead_end):
+                debug("pushing current S " + str(current.south()))
+                stack.append(current.south())
                 can_move = True
-            if can_move_east(curr) and not curr.east().in_list(stack) and not curr.east().in_list(dead_end):
-                debug("pushing current E " + str(curr.east()))
-                stack.append(curr.east())
+            if can_move_east(current) and not current.east().in_list(stack) and not current.east().in_list(dead_end):
+                debug("pushing current E " + str(current.east()))
+                stack.append(current.east())
                 can_move = True
-            if can_move_west(curr) and not curr.west().in_list(stack) and not curr.west().in_list(dead_end):
-                debug("pushing current W " + str(curr.west()))
-                stack.append(curr.west())
+            if can_move_west(current) and not current.west().in_list(stack) and not current.west().in_list(dead_end):
+                debug("pushing current W " + str(current.west()))
+                stack.append(current.west())
                 can_move = True
             if not can_move:
                 de = stack.pop()
