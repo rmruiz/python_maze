@@ -3,6 +3,9 @@ class Vector:
         self.x = x
         self.y = y
 
+    def __str__(self):
+        return "[" + str(self.x) + ", " + str(self.y) + "]"
+
     def is_equal_to(self, pos):
         if pos == None:
             return False
@@ -22,6 +25,11 @@ class Vector:
 
     def west(self):
         return Vector(self.x - 1, self.y)
+
+    def in_list(self, list):
+        for v in list:
+            if self.is_equal_to(v): return True
+        return False
 
 #def north(xy): return [xy[0], xy[1]-1]
 #def south(xy): return [xy[0], xy[1]+1]

@@ -10,7 +10,7 @@ VISITED = 4
 SOUTH = 2
 EAST = 1
 
-DEBUG = False
+DEBUG = True
 STEPBYSTEP = False
 STEPBYSTEP2 = True
 MARGIN = 5
@@ -36,7 +36,7 @@ def cell_was_visited(pos):
 
 def visit(pos):
     if get_grid(pos.x, pos.y) >= VISITED:
-        debug("marcando como visitado [" + str(pos.x) + ", " + str(pos.y) + "]")
+        debug("marcando como visitado " + str(pos))
         set_grid(pos.x, pos.y, get_grid(pos.x, pos.y) - VISITED)
     return
 
@@ -78,22 +78,19 @@ def south(xy): return [xy[0], xy[1]+1]
 def east(xy): return [xy[0]+1, xy[1]]
 def west(xy): return [xy[0]-1, xy[1]]
 
-def remove_wall_between(xi,yi, xf,yf):
-    xyi=[xi,yi]
-    pos_i = Vector(xi, yi)
-    xyf=[xf,yf]
-    if(  xf == north(xyi)[0] and yf == north(xyi)[1]): destroy_north_wall(pos_i)
-    elif(xf == south(xyi)[0] and yf == south(xyi)[1]): destroy_south_wall(pos_i)
-    elif(xf == east(xyi)[0]  and yf == east(xyi)[1]):  destroy_east_wall(pos_i)
-    elif(xf == west(xyi)[0]  and yf == west(xyi)[1]):  destroy_west_wall(pos_i)
-    else: raise("no match to remove wall!")
+def remove_wall_between(pos_i, pos_f):
+    if   pos_f.is_equal_to(pos_i.north()): destroy_north_wall(pos_i)
+    elif pos_f.is_equal_to(pos_i.south()): destroy_south_wall(pos_i)
+    elif pos_f.is_equal_to(pos_i.east()):  destroy_east_wall(pos_i)
+    elif pos_f.is_equal_to(pos_i.west()):  destroy_west_wall(pos_i)
+    else: raise("ERROR: No match to remove wall!")
     return
 
 def destroy_south_wall(pos):
     tmp = get_grid(pos.x, pos.y)
     tmp = tmp - VISITED if tmp >= VISITED else tmp
     if tmp >= SOUTH:
-        debug("destroying south wall [" + str(pos.x) + ", " + str(pos.y) + "]")
+        debug("destroying south wall " + str(pos))
         set_grid(pos.x, pos.y, get_grid(pos.x, pos.y) - SOUTH)
 
 def destroy_east_wall(pos):
@@ -101,15 +98,15 @@ def destroy_east_wall(pos):
     tmp = tmp - VISITED if tmp >= VISITED else tmp
     tmp = tmp - SOUTH if tmp >= SOUTH else tmp
     if tmp >= EAST:
-        debug("destroying east wall [" + str(pos.x) + ", " + str(pos.y) + "]")
+        debug("destroying east wall " + str(pos))
         set_grid(pos.x, pos.y, get_grid(pos.x, pos.y) - EAST)
 
 def destroy_north_wall(pos):
-    debug("destroying north wall [" + str(pos.x) + ", " + str(pos.y) + "]")
+    debug("destroying north wall " + str(pos))
     destroy_south_wall(pos.north())
 
 def destroy_west_wall(pos):
-    debug("destroying west wall [" + str(pos.x) + ", " + str(pos.y) + "]")
+    debug("destroying west wall " + str(pos))
     destroy_east_wall(pos.west())
 
 def draw_cell(i, j):
@@ -176,7 +173,7 @@ def has_any_neighbor(pos):
     if cell_has_west_neighbor(pos): return True
     if cell_has_north_neighbor(pos): return True
     if cell_has_south_neighbor(pos): return True
-    debug("no neighbor found for [" + str(pos.x) + ", " + str(pos.y) + "]")
+    debug("no neighbor found for " + str(pos))
     return False
 
 def next_neighbor(x, y):
@@ -222,8 +219,8 @@ def mainloop():
             if(has_any_neighbor(pos_i)):
                 stack.append([xi, yi])
                 xn, yn = next_neighbor(xi, yi)
-                remove_wall_between(xi,yi,xn,yn)
                 pos_n = Vector(xn, yn)
+                remove_wall_between(pos_i, pos_n)
                 visit(pos_n)
                 stack.append([xn, yn])
 
@@ -241,11 +238,9 @@ def mainloop():
     pause()
 
 def stack_search(start, end):
-    start_node = [start.x, start.y]
-    end_node = [end.x, end.y]
     stack = []
     dead_end = []
-    stack.append(start_node)
+    stack.append(start)
 
     found = False
     solucion.set(start, True)
@@ -254,59 +249,40 @@ def stack_search(start, end):
         if(STEPBYSTEP2):
             draw()
             delay_fps(1000) 
-        current=stack.pop()
-        curr = Vector(current[0], current[1])
+        curr=stack.pop()
         solucion.set(curr, False)
-        if curr.is_equal_to(Vector(end_node[0],end_node[1])):
-            stack.append(current)
+
+        if curr.is_equal_to(end):
+            stack.append(curr)
             solucion.set(curr, True)
             found = True
         else:
-            debug("pushing current " + str(current))
-            stack.append(current)
+            debug("pushing current " + str(curr))
+            stack.append(curr)
             solucion.set(curr, True)
             can_move = False
-            if can_move_north(curr) and north(current) not in stack and north(current) not in dead_end:    
-                debug("pushing current N" + str(north(current)))
-                stack.append(north(current))
+            if can_move_north(curr) and not curr.north().in_list(stack) and not curr.north().in_list(dead_end):
+                debug("pushing current N " + str(curr.north()))
+                stack.append(curr.north())
                 can_move = True
-            if can_move_south(curr) and south(current) not in stack and south(current) not in dead_end:
-                debug("pushing current S" + str(south(current)))
-                stack.append(south(current))
+            if can_move_south(curr) and not curr.south().in_list(stack) and not curr.south().in_list(dead_end):
+                debug("pushing current S " + str(curr.south()))
+                stack.append(curr.south())
                 can_move = True
-            if can_move_east(curr) and east(current) not in stack and east(current) not in dead_end:
-                debug("pushing current E" + str(east(current)))
-                stack.append(east(current))
+            if can_move_east(curr) and not curr.east().in_list(stack) and not curr.east().in_list(dead_end):
+                debug("pushing current E " + str(curr.east()))
+                stack.append(curr.east())
                 can_move = True
-            if can_move_west(curr) and west(current) not in stack and west(current) not in dead_end:
-                debug("pushing current W"+ str(west(current)))
-                stack.append(west(current))
+            if can_move_west(curr) and not curr.west().in_list(stack) and not curr.west().in_list(dead_end):
+                debug("pushing current W " + str(curr.west()))
+                stack.append(curr.west())
                 can_move = True
             if not can_move:
                 de = stack.pop()
                 dead_end.append(de)
-                solucion.set(Vector(de[0], de[1]), False)
-                debug("Dead End " + str(de))
-                
+                solucion.set(de, False)
+                debug("Dead End: " + str(de))
     return
-
-def deep_search(sub_tree, end_node):
-    draw()
-    if(STEPBYSTEP2):
-        delay_fps(1000) 
-    debug("deep_search over ["+str(sub_tree.data[0])+","+str(sub_tree.data[1])+"]")
-    if sub_tree.data[0] == end_node[0] and sub_tree.data[1] == end_node[1]:
-        print("Found!")
-        return True
-    for child in sub_tree.children:
-        child_pos = Vector(child.data[0], child.data[1])
-        solucion.set(child_pos, True)
-        if not deep_search(child, end_node): 
-            debug("removing ["+str(sub_tree.data[0])+","+str(sub_tree.data[1])+"]")
-            solucion.set(child_pos, False)
-        else:
-            return True
-    return False
 
 def can_move_east(pos):
     if pos.x == len(grid[0]) - 1: return False 
