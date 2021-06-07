@@ -3,6 +3,9 @@ from random import randint
 from math import floor
 from time import sleep
 
+from grid import Grid
+from vector import Vector
+
 VISITED = 4
 SOUTH = 2
 EAST = 1
@@ -31,13 +34,13 @@ def set_grid(x, y, value):
     grid[y][x] = value
     return
 
-def cell_was_visited(i, j):
-    return False if get_grid(i, j) >= VISITED else True
+def cell_was_visited(pos):
+    return False if get_grid(pos.x, pos.y) >= VISITED else True
 
-def visit(i, j):
-    if get_grid(i, j) >= VISITED:
-        debug("marcando como visitado i:" + str(i) + " j:" + str(j))
-        set_grid(i, j, get_grid(i, j) - VISITED)
+def visit(pos):
+    if get_grid(pos.x, pos.y) >= VISITED:
+        debug("marcando como visitado [" + str(pos.x) + ", " + str(pos.y) + "]")
+        set_grid(pos.x, pos.y, get_grid(pos.x, pos.y) - VISITED)
     return
 
 def cell_has_south_wall(i, j):
@@ -53,25 +56,25 @@ def cell_has_east_wall(i, j):
     tmp = tmp - SOUTH if tmp >= SOUTH else tmp
     return True if tmp >= EAST else False
 
-def cell_has_east_neighbor(i, j):
-    if i == len(grid[0]) - 1: 
+def cell_has_east_neighbor(cell):
+    if cell.x == len(grid[0]) - 1: 
         return False
-    return not cell_was_visited(i+1, j)
+    return not cell_was_visited(cell.east())
 
-def cell_has_west_neighbor(i, j):
-    if i == 0:
+def cell_has_west_neighbor(cell):
+    if cell.x == 0:
         return False
-    return not cell_was_visited(i-1, j)
+    return not cell_was_visited(cell.west())
 
-def cell_has_north_neighbor(i, j):
-    if j == 0: 
+def cell_has_north_neighbor(cell):
+    if cell.y == 0: 
         return False
-    return not cell_was_visited(i, j-1)
+    return not cell_was_visited(cell.north())
 
-def cell_has_south_neighbor(i, j):
-    if j == len(grid) - 1: 
+def cell_has_south_neighbor(cell):
+    if cell.y == len(grid) - 1: 
         return False
-    return not cell_was_visited(i, j+1)
+    return not cell_was_visited(cell.south())
 
 def north(xy): return [xy[0], xy[1]-1]
 def south(xy): return [xy[0], xy[1]+1]
@@ -80,36 +83,37 @@ def west(xy): return [xy[0]-1, xy[1]]
 
 def remove_wall_between(xi,yi, xf,yf):
     xyi=[xi,yi]
+    pos_i = Vector(xi, yi)
     xyf=[xf,yf]
-    if(  xf == north(xyi)[0] and yf == north(xyi)[1]): destroy_north_wall(xi,yi)
-    elif(xf == south(xyi)[0] and yf == south(xyi)[1]): destroy_south_wall(xi,yi)
-    elif(xf == east(xyi)[0]  and yf == east(xyi)[1]):  destroy_east_wall(xi,yi)
-    elif(xf == west(xyi)[0]  and yf == west(xyi)[1]):  destroy_west_wall(xi,yi)
+    if(  xf == north(xyi)[0] and yf == north(xyi)[1]): destroy_north_wall(pos_i)
+    elif(xf == south(xyi)[0] and yf == south(xyi)[1]): destroy_south_wall(pos_i)
+    elif(xf == east(xyi)[0]  and yf == east(xyi)[1]):  destroy_east_wall(pos_i)
+    elif(xf == west(xyi)[0]  and yf == west(xyi)[1]):  destroy_west_wall(pos_i)
     else: raise("no match to remove wall!")
     return
 
-def destroy_south_wall(i, j):
-    tmp = get_grid(i, j)
+def destroy_south_wall(pos):
+    tmp = get_grid(pos.x, pos.y)
     tmp = tmp - VISITED if tmp >= VISITED else tmp
     if tmp >= SOUTH:
-        debug("destroying south wall i:" + str(i) + " j:" + str(j))
-        set_grid(i, j, get_grid(i, j) - SOUTH)
+        debug("destroying south wall [" + str(pos.x) + ", " + str(pos.y) + "]")
+        set_grid(pos.x, pos.y, get_grid(pos.x, pos.y) - SOUTH)
 
-def destroy_east_wall(i, j):
-    tmp = get_grid(i, j)
+def destroy_east_wall(pos):
+    tmp = get_grid(pos.x, pos.y)
     tmp = tmp - VISITED if tmp >= VISITED else tmp
     tmp = tmp - SOUTH if tmp >= SOUTH else tmp
     if tmp >= EAST:
-        debug("destroying east wall i:" + str(i) + " j:" + str(j))
-        set_grid(i, j, get_grid(i, j) - EAST)
+        debug("destroying east wall [" + str(pos.x) + ", " + str(pos.y) + "]")
+        set_grid(pos.x, pos.y, get_grid(pos.x, pos.y) - EAST)
 
-def destroy_north_wall(i, j):
-    #debug("destroying north wall i:" + str(i) + " j:" + str(j))
-    destroy_south_wall(i, j-1)
+def destroy_north_wall(pos):
+    debug("destroying north wall [" + str(pos.x) + ", " + str(pos.y) + "]")
+    destroy_south_wall(pos.north())
 
-def destroy_west_wall(i, j):
-    #debug("destroying west wall i:" + str(i) + " j:" + str(j))
-    destroy_east_wall(i-1, j)
+def destroy_west_wall(pos):
+    debug("destroying west wall [" + str(pos.x) + ", " + str(pos.y) + "]")
+    destroy_east_wall(pos.west())
 
 def draw_cell(i, j):
     cell_height = floor(max_height/len(grid))
@@ -169,21 +173,22 @@ def draw_border():
     y1 = len(grid) * cell_height + MARGIN
     draw_polygon( x0,y0, x0,y1, x1,y1, x1,y0) 
 
-def has_any_neighbor(x, y):
-    if cell_has_east_neighbor(x, y): return True
-    if cell_has_west_neighbor(x, y): return True
-    if cell_has_north_neighbor(x, y): return True
-    if cell_has_south_neighbor(x, y): return True
-    #debug("no neighbor found for x:" + str(x) + " y:" + str(y))
+def has_any_neighbor(pos):
+    if cell_has_east_neighbor(pos): return True
+    if cell_has_west_neighbor(pos): return True
+    if cell_has_north_neighbor(pos): return True
+    if cell_has_south_neighbor(pos): return True
+    debug("no neighbor found for [" + str(pos.x) + ", " + str(pos.y) + "]")
     return False
 
 def next_neighbor(x, y):
     neighbors = []
     xy=[x,y]
-    if cell_has_east_neighbor(x, y): neighbors.append(east(xy))
-    if cell_has_west_neighbor(x, y): neighbors.append(west(xy))
-    if cell_has_north_neighbor(x, y): neighbors.append(north(xy))
-    if cell_has_south_neighbor(x, y): neighbors.append(south(xy))
+    cell = Vector(x, y)
+    if cell_has_east_neighbor(cell): neighbors.append(east(xy))
+    if cell_has_west_neighbor(cell): neighbors.append(west(xy))
+    if cell_has_north_neighbor(cell): neighbors.append(north(xy))
+    if cell_has_south_neighbor(cell): neighbors.append(south(xy))
     
     next = randint(0, len(neighbors)-1) 
     debug("neighbor selectd: " + str(neighbors[next]))
@@ -193,8 +198,9 @@ grid = []
 solucion = []
 def mainloop():
     global grid, solucion
-    width = 64
-    height = 48
+    maze_size = Vector(15, 12)
+    width = maze_size.x
+    height = maze_size.y
     
     grid = make_full_grid(width, height)
     solucion = make_solucion(width, height)
@@ -203,7 +209,8 @@ def mainloop():
     yi = len(grid) - 1
     stack = []
     stack.append([xi, yi])
-    visit(xi, yi)
+    pos_i = Vector(xi, yi)
+    visit(pos_i)
     while is_run():
         if(len(stack) == 0): 
             clear_device()
@@ -213,11 +220,13 @@ def mainloop():
         while(len(stack)>0):
             #sleep(1)
             xi, yi = stack.pop()
-            if(has_any_neighbor(xi, yi)):
+            pos_i = Vector(xi, yi)
+            if(has_any_neighbor(pos_i)):
                 stack.append([xi, yi])
                 xn, yn = next_neighbor(xi, yi)
                 remove_wall_between(xi,yi,xn,yn)
-                visit(xn, yn)
+                pos_n = Vector(xn, yn)
+                visit(pos_n)
                 stack.append([xn, yn])
 
             if(STEPBYSTEP):
@@ -249,8 +258,9 @@ def stack_search(start_node, end_node):
             draw()
             delay_fps(1000) 
         current=stack.pop()
+        curr = Vector(current[0], current[1])
         set_solucion(current, False)
-        if same(current, end_node):
+        if curr.is_equal_to(Vector(end_node[0],end_node[1])):
             stack.append(current)
             set_solucion(current, True)
             found = True
@@ -259,19 +269,19 @@ def stack_search(start_node, end_node):
             stack.append(current)
             set_solucion(current, True)
             can_move = False
-            if can_move_north(current[0], current[1]) and north(current) not in stack and north(current) not in dead_end:    
+            if can_move_north(curr) and north(current) not in stack and north(current) not in dead_end:    
                 debug("pushing current N" + str(north(current)))
                 stack.append(north(current))
                 can_move = True
-            if can_move_south(current[0], current[1]) and south(current) not in stack and south(current) not in dead_end:
+            if can_move_south(curr) and south(current) not in stack and south(current) not in dead_end:
                 debug("pushing current S" + str(south(current)))
                 stack.append(south(current))
                 can_move = True
-            if can_move_east(current[0], current[1]) and east(current) not in stack and east(current) not in dead_end:
+            if can_move_east(curr) and east(current) not in stack and east(current) not in dead_end:
                 debug("pushing current E" + str(east(current)))
                 stack.append(east(current))
                 can_move = True
-            if can_move_west(current[0], current[1]) and west(current) not in stack and west(current) not in dead_end:
+            if can_move_west(curr) and west(current) not in stack and west(current) not in dead_end:
                 debug("pushing current W"+ str(west(current)))
                 stack.append(west(current))
                 can_move = True
@@ -307,63 +317,26 @@ def set_solucion(xy, value):
     solucion[xy[1]][xy[0]] = value
     return
 
-class Node:
-    def __init__(self, data = None):
-        self.children = []
-        self.data = data
-
-def same(ij, xy):
-    if xy == None: return False
-    if ij[0] != xy[0]: return False
-    if ij[1] != xy[1]: return False
-    return True
-
-def build_tree_from(xy, last_visited):
-    node = Node()
-    node.data = xy
-    node.children = []
-    if can_move_north(xy[0], xy[1]):
-        if not same(north(xy[0], xy[1]), last_visited): 
-            debug("going north:")
-            debug(north(xy[0], xy[1]))
-            node.children.append(build_tree_from(north(xy[0], xy[1]), xy))
-    if can_move_south(xy[0], xy[1]):
-        if not same(south(xy[0], xy[1]), last_visited): 
-            debug("going south:")
-            debug(south(xy[0], xy[1]))
-            node.children.append(build_tree_from(south(xy[0], xy[1]), xy))
-    if can_move_east(xy[0], xy[1]):
-        if not same(east(xy[0], xy[1]), last_visited): 
-            debug("going east:")
-            debug(east(xy[0], xy[1]))
-            node.children.append(build_tree_from(east(xy[0], xy[1]), xy))
-    if can_move_west(xy[0], xy[1]):
-        if not same(west(xy[0], xy[1]), last_visited): 
-            debug("going west:")
-            debug(west(xy[0], xy[1]))
-            node.children.append(build_tree_from(west(xy[0], xy[1]), xy))
-    return node
-
-def can_move_east(i, j):
-    if i == len(grid[0]) - 1: return False 
-    tmp = get_grid(i, j)
+def can_move_east(pos):
+    if pos.x == len(grid[0]) - 1: return False 
+    tmp = get_grid(pos.x, pos.y)
     tmp = tmp - VISITED if tmp >= VISITED else tmp
     tmp = tmp - SOUTH if tmp >= SOUTH else tmp
     return False if tmp >= EAST else True
 
-def can_move_south(i, j):
-    if j == len(grid) - 1: return False 
-    tmp = get_grid(i, j)
+def can_move_south(pos):
+    if pos.y == len(grid) - 1: return False 
+    tmp = get_grid(pos.x, pos.y)
     tmp = tmp - VISITED if tmp >= VISITED else tmp
     return False if tmp >= SOUTH else True
 
-def can_move_north(i, j):
-    if j == 0: return False
-    return can_move_south(i, j-1)
+def can_move_north(pos):
+    if pos.y == 0: return False
+    return can_move_south(pos.north())
     
-def can_move_west(i, j):
-    if i == 0: return False
-    return can_move_east(i-1, j)
+def can_move_west(pos):
+    if pos.x == 0: return False
+    return can_move_east(pos.west())
 
 def main():
     init_graph(max_width + 2*MARGIN, max_height + 2*MARGIN)
