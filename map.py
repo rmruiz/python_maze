@@ -38,7 +38,7 @@ class Map:
     def cell_has_west_neighbor(self, cell):
         if cell.x == 0:
             return False
-        return not self.visitado.get(self, cell.west())
+        return not self.visitado.get(cell.west())
 
     def cell_has_north_neighbor(self, cell):
         if cell.y == 0: 

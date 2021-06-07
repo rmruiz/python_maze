@@ -18,95 +18,25 @@ MARGIN = 5
 max_width = 640
 max_height = 480
 
-def make_full_grid(width, height):
-    return [[3 for i in range(width)] for j in range(height)]
-
 def debug(string):
     if DEBUG: print(string)
 
-def get_grid(x,y):
-    return grid[y][x]
-
-def set_grid(x, y, value):
-    grid[y][x] = value
-    return
-
-def cell_has_south_wall(pos):
-    if pos.y == len(grid) - 1: return False
-    tmp = get_grid(pos.x, pos.y)
-    return True if tmp >= SOUTH else False
-
-def cell_has_east_wall(pos):
-    if pos.x == len(grid[0]) - 1: return False 
-    tmp = get_grid(pos.x, pos.y)
-    tmp = tmp - SOUTH if tmp >= SOUTH else tmp
-    return True if tmp >= EAST else False
-
-def cell_has_east_neighbor(cell):
-    if cell.x == len(grid[0]) - 1: 
-        return False
-    return not maze.visitado.get(cell.east())
-
-def cell_has_west_neighbor(cell):
-    if cell.x == 0:
-        return False
-    return not maze.visitado.get(cell.west())
-
-def cell_has_north_neighbor(cell):
-    if cell.y == 0: 
-        return False
-    return not maze.visitado.get(cell.north())
-
-def cell_has_south_neighbor(cell):
-    if cell.y == len(grid) - 1: 
-        return False
-    return not maze.visitado.get(cell.south())
-
-def remove_wall_between(pos_i, pos_f):
-    if   pos_f.is_equal_to(pos_i.north()): destroy_north_wall(pos_i)
-    elif pos_f.is_equal_to(pos_i.south()): destroy_south_wall(pos_i)
-    elif pos_f.is_equal_to(pos_i.east()):  destroy_east_wall(pos_i)
-    elif pos_f.is_equal_to(pos_i.west()):  destroy_west_wall(pos_i)
-    else: raise("ERROR: No match to remove wall!")
-    return
-
-def destroy_south_wall(pos):
-    tmp = get_grid(pos.x, pos.y)
-    if tmp >= SOUTH:
-        debug("destroying south wall " + str(pos))
-        set_grid(pos.x, pos.y, get_grid(pos.x, pos.y) - SOUTH)
-
-def destroy_east_wall(pos):
-    tmp = get_grid(pos.x, pos.y)
-    tmp = tmp - SOUTH if tmp >= SOUTH else tmp
-    if tmp >= EAST:
-        debug("destroying east wall " + str(pos))
-        set_grid(pos.x, pos.y, get_grid(pos.x, pos.y) - EAST)
-
-def destroy_north_wall(pos):
-    debug("destroying north wall " + str(pos))
-    destroy_south_wall(pos.north())
-
-def destroy_west_wall(pos):
-    debug("destroying west wall " + str(pos))
-    destroy_east_wall(pos.west())
-
 def draw_cell(i, j):
     pos = Vector(i, j)
-    cell_height = floor(max_height/len(grid))
-    cell_width = floor(max_width/len(grid[0]))
+    cell_height = floor(max_height/maze.size.y)
+    cell_width = floor(max_width/maze.size.x)
     x0 = i * cell_width + MARGIN
     x1 = (i+1) * cell_width + MARGIN
     y0 = j * cell_height + MARGIN
     y1 = (j+1) * cell_height + MARGIN
     
-    if cell_has_south_wall(pos): 
+    if maze.cell_has_south_wall(pos): 
         set_color(Color.DARK_BLUE)
         draw_poly_line(  x0,y1,  x1,y1  )
     else: 
         set_color(Color.WHITE)
         draw_poly_line(  x0,y1,  x1,y1  )
-    if cell_has_east_wall(pos):
+    if maze.cell_has_east_wall(pos):
         set_color(Color.DARK_BLUE)
         draw_poly_line(  x1,y1,  x1,y0  )
     else: 
@@ -114,8 +44,8 @@ def draw_cell(i, j):
         draw_poly_line(  x1,y1,  x1,y0  )
 
 def draw_ball(pos):
-    cell_height = floor(max_height/len(grid))
-    cell_width = floor(max_width/len(grid[0]))
+    cell_height = floor(max_height/maze.size.y)
+    cell_width = floor(max_width/maze.size.x)
     x0 = pos.x * cell_width + MARGIN + cell_width/2
     y0 = pos.y * cell_height + MARGIN + cell_height/2
     set_color(Color.RED)
@@ -124,13 +54,11 @@ def draw_ball(pos):
 
 def draw():
     draw_border()
-    x_range = range(len(grid[0]))
-    y_range = range(len(grid))
-
-    for i in x_range:
-        for j in y_range:
-            pos = Vector(i, j)
-            draw_cell(i, j)
+    
+    for x in range(maze.size.x):
+        for y in range(maze.size.y):
+            pos = Vector(x, y)
+            draw_cell(x, y)
             if maze.solucion.get(pos): 
                 draw_ball(pos)
     return
@@ -138,42 +66,22 @@ def draw():
 def draw_border():
     set_color(Color.BLACK)
     set_fill_color(Color.WHITE)
-    cell_height = floor(max_height/len(grid))
-    cell_width = floor(max_width/len(grid[0]))
+    cell_height = floor(max_height/maze.size.y)
+    cell_width = floor(max_width/maze.size.x)
     x0 = 0 + MARGIN
-    x1 = len(grid[0]) * cell_width + MARGIN
+    x1 = maze.size.x * cell_width + MARGIN
     y0 = 0 + MARGIN
-    y1 = len(grid) * cell_height + MARGIN
+    y1 = maze.size.y * cell_height + MARGIN
     draw_polygon( x0,y0, x0,y1, x1,y1, x1,y0) 
 
-def has_any_neighbor(pos):
-    if cell_has_east_neighbor(pos): return True
-    if cell_has_west_neighbor(pos): return True
-    if cell_has_north_neighbor(pos): return True
-    if cell_has_south_neighbor(pos): return True
-    debug("no neighbor found for " + str(pos))
-    return False
-
-def next_neighbor(pos):
-    neighbors = []
-    if cell_has_east_neighbor(pos): neighbors.append(pos.east())
-    if cell_has_west_neighbor(pos): neighbors.append(pos.west())
-    if cell_has_north_neighbor(pos): neighbors.append(pos.north())
-    if cell_has_south_neighbor(pos): neighbors.append(pos.south())
-    
-    next = randint(0, len(neighbors) - 1) 
-    debug("neighbor selected: " + str(neighbors[next]))
-    return neighbors[next]
-
 maze = None
-grid = []
+
 def mainloop():
     global maze
     global grid
     maze_size = Vector(15, 15)  
     maze = Map(maze_size)
-    grid = make_full_grid(maze_size.x, maze_size.y)
-
+    
     pos_i = Vector(0, 0)
     stack = []
     stack.append(pos_i)
@@ -187,10 +95,10 @@ def mainloop():
         while(len(stack)>0):
             #sleep(1)
             pos_i = stack.pop()
-            if(has_any_neighbor(pos_i)):
+            if(maze.has_any_neighbor(pos_i)):
                 stack.append(pos_i)
-                pos_n = next_neighbor(pos_i)
-                remove_wall_between(pos_i, pos_n)
+                pos_n = maze.next_neighbor(pos_i)
+                maze.remove_wall_between(pos_i, pos_n)
                 maze.visitado.set(pos_n, True)
                 stack.append(pos_n)
 
@@ -231,19 +139,19 @@ def stack_search(start, end):
             stack.append(current)
             maze.solucion.set(current, True)
             can_move = False
-            if can_move_north(current) and not current.north().in_list(stack) and not current.north().in_list(dead_end):
+            if maze.can_move_north(current) and not current.north().in_list(stack) and not current.north().in_list(dead_end):
                 debug("pushing current N " + str(current.north()))
                 stack.append(current.north())
                 can_move = True
-            if can_move_south(current) and not current.south().in_list(stack) and not current.south().in_list(dead_end):
+            if maze.can_move_south(current) and not current.south().in_list(stack) and not current.south().in_list(dead_end):
                 debug("pushing current S " + str(current.south()))
                 stack.append(current.south())
                 can_move = True
-            if can_move_east(current) and not current.east().in_list(stack) and not current.east().in_list(dead_end):
+            if maze.can_move_east(current) and not current.east().in_list(stack) and not current.east().in_list(dead_end):
                 debug("pushing current E " + str(current.east()))
                 stack.append(current.east())
                 can_move = True
-            if can_move_west(current) and not current.west().in_list(stack) and not current.west().in_list(dead_end):
+            if maze.can_move_west(current) and not current.west().in_list(stack) and not current.west().in_list(dead_end):
                 debug("pushing current W " + str(current.west()))
                 stack.append(current.west())
                 can_move = True
@@ -253,25 +161,6 @@ def stack_search(start, end):
                 maze.solucion.set(de, False)
                 debug("Dead End: " + str(de))
     return
-
-def can_move_east(pos):
-    if pos.x == len(grid[0]) - 1: return False 
-    tmp = get_grid(pos.x, pos.y)
-    tmp = tmp - SOUTH if tmp >= SOUTH else tmp
-    return False if tmp >= EAST else True
-
-def can_move_south(pos):
-    if pos.y == len(grid) - 1: return False 
-    tmp = get_grid(pos.x, pos.y)
-    return False if tmp >= SOUTH else True
-
-def can_move_north(pos):
-    if pos.y == 0: return False
-    return can_move_south(pos.north())
-    
-def can_move_west(pos):
-    if pos.x == 0: return False
-    return can_move_east(pos.west())
 
 def main():
     init_graph(max_width + 2*MARGIN, max_height + 2*MARGIN)
