@@ -1,9 +1,11 @@
 from grid import Grid
 from random import randint
+from math import floor
 
 class Map:
-    def __init__(self, size):
+    def __init__(self, size, canvas_size):
         self.size = size
+        self.canvas_size = canvas_size
         self.south_walls = Grid(size, True)
         self.east_walls = Grid(size, True)
         self.visitado = Grid(size, False)
@@ -98,3 +100,9 @@ class Map:
         if pos.x == 0: return False
         return self.can_move_east(pos.west())
 
+    def cell_width(self):
+        return floor(self.canvas_size.x/self.size.x)
+    
+    def cell_height(self):
+        return floor(self.canvas_size.y/self.size.y)
+    

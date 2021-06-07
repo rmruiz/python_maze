@@ -1,34 +1,28 @@
 from easygraphics import draw_circle, pause, easy_run, close_graph, set_fill_color, set_caption, Color, RenderMode, draw_polygon, draw_poly_line, set_color, clear_device, is_run, init_graph, delay_fps, set_render_mode
-from random import randint
 from math import floor
-from time import sleep
 
-from grid import Grid
 from map import Map
 from vector import Vector
 
-SOUTH = 2
-EAST = 1
-
-DEBUG = True
+DEBUG = False
 STEPBYSTEP = False
-STEPBYSTEP2 = True
+STEPBYSTEP2 = False
 MARGIN = 5
 
+CANVAS = Vector(640, 480)
 max_width = 640
 max_height = 480
 
 def debug(string):
     if DEBUG: print(string)
 
-def draw_cell(i, j):
-    pos = Vector(i, j)
+def draw_cell(pos):
     cell_height = floor(max_height/maze.size.y)
     cell_width = floor(max_width/maze.size.x)
-    x0 = i * cell_width + MARGIN
-    x1 = (i+1) * cell_width + MARGIN
-    y0 = j * cell_height + MARGIN
-    y1 = (j+1) * cell_height + MARGIN
+    x0 = pos.x * cell_width + MARGIN
+    x1 = (pos.x+1) * cell_width + MARGIN
+    y0 = pos.y * cell_height + MARGIN
+    y1 = (pos.y+1) * cell_height + MARGIN
     
     if maze.cell_has_south_wall(pos): 
         set_color(Color.DARK_BLUE)
@@ -44,13 +38,21 @@ def draw_cell(i, j):
         draw_poly_line(  x1,y1,  x1,y0  )
 
 def draw_ball(pos):
-    cell_height = floor(max_height/maze.size.y)
-    cell_width = floor(max_width/maze.size.x)
-    x0 = pos.x * cell_width + MARGIN + cell_width/2
-    y0 = pos.y * cell_height + MARGIN + cell_height/2
+    x0 = pos.x * maze.cell_width() + MARGIN + maze.cell_width()/2
+    y0 = pos.y * maze.cell_height() + MARGIN + maze.cell_height()/2
     set_color(Color.RED)
     set_fill_color(Color.RED)
-    draw_circle(x0, y0, min(cell_width, cell_height)/4 - 2 )
+    draw_circle(x0, y0, min(maze.cell_width(), maze.cell_height())/3 )
+
+def draw_result(pos):
+    set_color(Color.RED)
+    set_fill_color(Color.RED)
+    margin = 2
+    x0 = pos.x * maze.cell_width() + MARGIN + margin
+    y0 = pos.y * maze.cell_height() + MARGIN + margin
+    x1 = x0 + maze.cell_width() - 2*margin
+    y1 = y0 + maze.cell_height() - 2*margin
+    draw_polygon( x0,y0, x0,y1, x1,y1, x1,y0 )
 
 def draw():
     draw_border()
@@ -58,7 +60,7 @@ def draw():
     for x in range(maze.size.x):
         for y in range(maze.size.y):
             pos = Vector(x, y)
-            draw_cell(x, y)
+            draw_cell(pos)
             if maze.solucion.get(pos): 
                 draw_ball(pos)
     return
@@ -78,9 +80,8 @@ maze = None
 
 def mainloop():
     global maze
-    global grid
     maze_size = Vector(15, 15)  
-    maze = Map(maze_size)
+    maze = Map(maze_size, CANVAS)
     
     pos_i = Vector(0, 0)
     stack = []
