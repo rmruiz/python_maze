@@ -21,9 +21,6 @@ max_height = 480
 def make_full_grid(width, height):
     return [[7 for i in range(width)] for j in range(height)]
 
-def make_solucion(width, height):
-    return [[False for i in range(width)] for j in range(height)]
-
 def debug(string):
     if DEBUG: print(string)
 
@@ -156,10 +153,11 @@ def draw():
     y_range = range(len(grid))
 
     for i in x_range:
-       for j in y_range:
-          draw_cell(i, j)
-          if get_solucion(i, j): 
-              draw_ball(i, j)
+        for j in y_range:
+            pos = Vector(i, j)
+            draw_cell(i, j)
+            if solucion.get(pos): 
+                draw_ball(i, j)
     return
 
 def draw_border():
@@ -191,11 +189,11 @@ def next_neighbor(x, y):
     if cell_has_south_neighbor(cell): neighbors.append(south(xy))
     
     next = randint(0, len(neighbors)-1) 
-    debug("neighbor selectd: " + str(neighbors[next]))
+    debug("neighbor selected: " + str(neighbors[next]))
     return neighbors[next]
 
 grid = []
-solucion = []
+solucion = None
 def mainloop():
     global grid, solucion
     maze_size = Vector(15, 12)
@@ -203,7 +201,7 @@ def mainloop():
     height = maze_size.y
     
     grid = make_full_grid(width, height)
-    solucion = make_solucion(width, height)
+    solucion = Grid(maze_size, False)
 
     xi = randint(0, len(grid)-1)
     yi = len(grid) - 1
@@ -235,23 +233,22 @@ def mainloop():
                 draw()
 
     debug("Solving maze")
-    start_node = [0, 0]
-    end_node = [width-1,height-1]
-    #tree = build_tree_from(start_node, None)
-    #set_solucion(tree.data, tree.data, True)
-    #deep_search(tree, end_node)
+    start_node = Vector(0, 0)
+    end_node = Vector(maze_size.x - 1, maze_size.y - 1)
     stack_search(start_node, end_node)
         
     draw()
     pause()
 
-def stack_search(start_node, end_node):
+def stack_search(start, end):
+    start_node = [start.x, start.y]
+    end_node = [end.x, end.y]
     stack = []
     dead_end = []
     stack.append(start_node)
 
     found = False
-    set_solucion(start_node, True)
+    solucion.set(start, True)
     
     while(not found):
         if(STEPBYSTEP2):
@@ -259,15 +256,15 @@ def stack_search(start_node, end_node):
             delay_fps(1000) 
         current=stack.pop()
         curr = Vector(current[0], current[1])
-        set_solucion(current, False)
+        solucion.set(curr, False)
         if curr.is_equal_to(Vector(end_node[0],end_node[1])):
             stack.append(current)
-            set_solucion(current, True)
+            solucion.set(curr, True)
             found = True
         else:
             debug("pushing current " + str(current))
             stack.append(current)
-            set_solucion(current, True)
+            solucion.set(curr, True)
             can_move = False
             if can_move_north(curr) and north(current) not in stack and north(current) not in dead_end:    
                 debug("pushing current N" + str(north(current)))
@@ -288,7 +285,7 @@ def stack_search(start_node, end_node):
             if not can_move:
                 de = stack.pop()
                 dead_end.append(de)
-                set_solucion(de, False)
+                solucion.set(Vector(de[0], de[1]), False)
                 debug("Dead End " + str(de))
                 
     return
@@ -302,20 +299,14 @@ def deep_search(sub_tree, end_node):
         print("Found!")
         return True
     for child in sub_tree.children:
-        set_solucion(child.data[0], child.data[1], True)
+        child_pos = Vector(child.data[0], child.data[1])
+        solucion.set(child_pos, True)
         if not deep_search(child, end_node): 
             debug("removing ["+str(sub_tree.data[0])+","+str(sub_tree.data[1])+"]")
-            set_solucion(child.data[0], child.data[1], False)
+            solucion.set(child_pos, False)
         else:
             return True
     return False
-
-def get_solucion(x, y):
-    return solucion[y][x]
-
-def set_solucion(xy, value):
-    solucion[xy[1]][xy[0]] = value
-    return
 
 def can_move_east(pos):
     if pos.x == len(grid[0]) - 1: return False 
