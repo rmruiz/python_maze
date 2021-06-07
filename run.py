@@ -7,7 +7,6 @@ from grid import Grid
 from map import Map
 from vector import Vector
 
-VISITED = 4
 SOUTH = 2
 EAST = 1
 
@@ -20,7 +19,7 @@ max_width = 640
 max_height = 480
 
 def make_full_grid(width, height):
-    return [[7 for i in range(width)] for j in range(height)]
+    return [[3 for i in range(width)] for j in range(height)]
 
 def debug(string):
     if DEBUG: print(string)
@@ -32,47 +31,36 @@ def set_grid(x, y, value):
     grid[y][x] = value
     return
 
-def cell_was_visited(pos):
-    return False if get_grid(pos.x, pos.y) >= VISITED else True
-
-def visit(pos):
-    if get_grid(pos.x, pos.y) >= VISITED:
-        debug("marcando como visitado " + str(pos))
-        set_grid(pos.x, pos.y, get_grid(pos.x, pos.y) - VISITED)
-    return
-
 def cell_has_south_wall(i, j):
     if j == len(grid) - 1: return False 
     tmp = get_grid(i, j)
-    tmp = tmp - VISITED if tmp >= VISITED else tmp
     return True if tmp >= SOUTH else False
 
 def cell_has_east_wall(i, j):
     if i == len(grid[0]) - 1: return False 
     tmp = get_grid(i, j)
-    tmp = tmp - VISITED if tmp >= VISITED else tmp
     tmp = tmp - SOUTH if tmp >= SOUTH else tmp
     return True if tmp >= EAST else False
 
 def cell_has_east_neighbor(cell):
     if cell.x == len(grid[0]) - 1: 
         return False
-    return not cell_was_visited(cell.east())
+    return not visitado.get(cell.east())
 
 def cell_has_west_neighbor(cell):
     if cell.x == 0:
         return False
-    return not cell_was_visited(cell.west())
+    return not visitado.get(cell.west())
 
 def cell_has_north_neighbor(cell):
     if cell.y == 0: 
         return False
-    return not cell_was_visited(cell.north())
+    return not visitado.get(cell.north())
 
 def cell_has_south_neighbor(cell):
     if cell.y == len(grid) - 1: 
         return False
-    return not cell_was_visited(cell.south())
+    return not visitado.get(cell.south())
 
 def north(xy): return [xy[0], xy[1]-1]
 def south(xy): return [xy[0], xy[1]+1]
@@ -89,14 +77,12 @@ def remove_wall_between(pos_i, pos_f):
 
 def destroy_south_wall(pos):
     tmp = get_grid(pos.x, pos.y)
-    tmp = tmp - VISITED if tmp >= VISITED else tmp
     if tmp >= SOUTH:
         debug("destroying south wall " + str(pos))
         set_grid(pos.x, pos.y, get_grid(pos.x, pos.y) - SOUTH)
 
 def destroy_east_wall(pos):
     tmp = get_grid(pos.x, pos.y)
-    tmp = tmp - VISITED if tmp >= VISITED else tmp
     tmp = tmp - SOUTH if tmp >= SOUTH else tmp
     if tmp >= EAST:
         debug("destroying east wall " + str(pos))
@@ -130,11 +116,6 @@ def draw_cell(i, j):
     else: 
         set_color(Color.WHITE)
         draw_poly_line(  x1,y1,  x1,y0  )
-    #if cell_was_visited(i, j):
-    #    set_color(Color.RED)
-    #    draw_poly_line(  x0,y0,  x1,y1  )
-    #    draw_poly_line(  x0,y1,  x1,y0  )
-
 
 def draw_ball(i, j):
     cell_height = floor(max_height/len(grid))
@@ -195,7 +176,7 @@ grid = []
 solucion = None
 visitado = None
 def mainloop():
-    global grid, solucion
+    global grid, solucion, visitado
     maze_size = Vector(15, 12)
     width = maze_size.x
     height = maze_size.y
@@ -210,7 +191,7 @@ def mainloop():
     stack = []
     stack.append(pos_i)
     
-    visit(pos_i)
+    visitado.set(pos_i, True)
     while is_run():
         if(len(stack) == 0): 
             clear_device()
@@ -224,7 +205,7 @@ def mainloop():
                 stack.append(pos_i)
                 pos_n = next_neighbor(pos_i)
                 remove_wall_between(pos_i, pos_n)
-                visit(pos_n)
+                visitado.set(pos_n, True)
                 stack.append(pos_n)
 
             if(STEPBYSTEP):
@@ -290,14 +271,12 @@ def stack_search(start, end):
 def can_move_east(pos):
     if pos.x == len(grid[0]) - 1: return False 
     tmp = get_grid(pos.x, pos.y)
-    tmp = tmp - VISITED if tmp >= VISITED else tmp
     tmp = tmp - SOUTH if tmp >= SOUTH else tmp
     return False if tmp >= EAST else True
 
 def can_move_south(pos):
     if pos.y == len(grid) - 1: return False 
     tmp = get_grid(pos.x, pos.y)
-    tmp = tmp - VISITED if tmp >= VISITED else tmp
     return False if tmp >= SOUTH else True
 
 def can_move_north(pos):
