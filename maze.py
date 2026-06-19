@@ -3,7 +3,6 @@ from typing import Callable, List, Optional
 
 from grid import Grid
 from random import choice
-from math import floor
 from vector import Vector
 
 logger = logging.getLogger(__name__)
@@ -88,31 +87,30 @@ class Maze:
     def cell_has_south_neighbor(self, cell: Vector) -> bool:
         return self.in_bounds(cell.south()) and not self.visited[cell.south()]
 
-    def remove_wall_between(self, from_pos, to_pos):
+    def remove_wall_between(self, from_pos: Vector, to_pos: Vector) -> None:
         if   to_pos == from_pos.north(): self.destroy_north_wall(from_pos)
         elif to_pos == from_pos.south(): self.destroy_south_wall(from_pos)
         elif to_pos == from_pos.east():  self.destroy_east_wall(from_pos)
         elif to_pos == from_pos.west():  self.destroy_west_wall(from_pos)
         else: raise RuntimeError("ERROR: No match to remove wall!")
-        return
 
-    def destroy_south_wall(self, pos):
+    def destroy_south_wall(self, pos: Vector) -> None:
         self.debug("destroying south wall " + str(pos))
         self.south_walls[pos] = False
         
-    def destroy_east_wall(self, pos):
+    def destroy_east_wall(self, pos: Vector) -> None:
         self.debug("destroying east wall " + str(pos))
         self.east_walls[pos] = False
 
-    def destroy_north_wall(self, pos):
+    def destroy_north_wall(self, pos: Vector) -> None:
         self.debug("destroying north wall " + str(pos))
         self.destroy_south_wall(pos.north())
 
-    def destroy_west_wall(self, pos):
+    def destroy_west_wall(self, pos: Vector) -> None:
         self.debug("destroying west wall " + str(pos))
         self.destroy_east_wall(pos.west())
 
-    def has_any_neighbor(self, pos):
+    def has_any_neighbor(self, pos: Vector) -> bool:
         if self.cell_has_east_neighbor(pos): return True
         if self.cell_has_west_neighbor(pos): return True
         if self.cell_has_north_neighbor(pos): return True
@@ -120,25 +118,19 @@ class Maze:
         self.debug("no neighbor found for " + str(pos))
         return False
 
-    def can_move_east(self, pos):
+    def can_move_east(self, pos: Vector) -> bool:
         if pos.x == self.size.x - 1: return False
         return not self.east_walls[pos]
 
-    def can_move_south(self, pos):
+    def can_move_south(self, pos: Vector) -> bool:
         if pos.y == self.size.y - 1: return False
         return not self.south_walls[pos]
 
-    def can_move_north(self, pos):
+    def can_move_north(self, pos: Vector) -> bool:
         if pos.y == 0: return False
         return self.can_move_south(pos.north())
         
-    def can_move_west(self, pos):
+    def can_move_west(self, pos: Vector) -> bool:
         if pos.x == 0: return False
         return self.can_move_east(pos.west())
-
-    def cell_width(self):
-        return floor(self.canvas_size.x/self.size.x)
-    
-    def cell_height(self):
-        return floor(self.canvas_size.y/self.size.y)
     
