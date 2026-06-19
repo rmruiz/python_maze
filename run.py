@@ -1,6 +1,6 @@
+import logging
+
 from easygraphics import pause, easy_run, close_graph, set_caption, RenderMode, clear_device, is_run, init_graph, delay_fps, set_render_mode
-from math import floor
-import time
 
 from maze import Maze
 from maze_solver import MazeSolver
@@ -16,12 +16,14 @@ CANVAS = Vector(640, 480)
 max_width = 640
 max_height = 480
 
-def debug(string):
-    if DEBUG: print(string)
+logger = logging.getLogger(__name__)
 
-def mainloop():
+def debug(string: str) -> None:
+    logger.debug(string)
+
+def mainloop() -> None:
     maze_size = Vector(15, 15)
-    maze = Maze(maze_size, CANVAS)
+    maze = Maze(maze_size, CANVAS, debug=DEBUG)
     view = MazeView(maze, CANVAS, margin=MARGIN)
 
     def step():
@@ -48,7 +50,8 @@ def mainloop():
     pause()
 
 
-def main():
+def main() -> None:
+    logging.basicConfig(level=logging.DEBUG if DEBUG else logging.INFO)
     init_graph(max_width + 2*MARGIN, max_height + 2*MARGIN)
     set_render_mode(RenderMode.RENDER_MANUAL)
     set_caption("Maze builder")

@@ -1,25 +1,27 @@
 from collections import deque
+from typing import Deque, Dict, List, Optional, Set
 
+from maze import Maze
 from vector import Vector
 
 class MazeSolver:
-    def __init__(self, maze):
-        self.maze = maze
+    def __init__(self, maze: Maze) -> None:
+        self.maze: Maze = maze
 
-    def solve(self, start: Vector, end: Vector, method: str = "bfs"):
+    def solve(self, start: Vector, end: Vector, method: str = "bfs") -> List[Vector]:
         self._clear_solution()
         if method == "bfs":
             return self._solve_bfs(start, end)
         raise ValueError(f"Unsupported solver method: {method}")
 
-    def _clear_solution(self):
+    def _clear_solution(self) -> None:
         for pos in self.maze.all_positions():
             self.maze.solution[pos] = False
 
-    def _solve_bfs(self, start: Vector, end: Vector):
-        queue = deque([start])
-        parents = {start: None}
-        visited = {start}
+    def _solve_bfs(self, start: Vector, end: Vector) -> List[Vector]:
+        queue: Deque[Vector] = deque([start])
+        parents: Dict[Vector, Optional[Vector]] = {start: None}
+        visited: Set[Vector] = {start}
 
         while queue:
             current = queue.popleft()
@@ -35,8 +37,8 @@ class MazeSolver:
 
         return []
 
-    def _neighbors(self, pos: Vector):
-        neighbors = []
+    def _neighbors(self, pos: Vector) -> List[Vector]:
+        neighbors: List[Vector] = []
         if self.maze.can_move_north(pos):
             neighbors.append(pos.north())
         if self.maze.can_move_south(pos):
@@ -47,7 +49,7 @@ class MazeSolver:
             neighbors.append(pos.west())
         return neighbors
 
-    def _reconstruct_path(self, parents, end: Vector):
+    def _reconstruct_path(self, parents: Dict[Vector, Optional[Vector]], end: Vector) -> List[Vector]:
         path = []
         current = end
         while current is not None:

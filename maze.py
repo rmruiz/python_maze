@@ -1,19 +1,24 @@
+import logging
+from typing import Callable, List, Optional
+
 from grid import Grid
 from random import choice
 from math import floor
 from vector import Vector
 
-class Maze:
-    def __init__(self, size, canvas_size, debug=True):
-        self.size = size
-        self.canvas_size = canvas_size
-        self.south_walls = Grid(size, True)
-        self.east_walls = Grid(size, True)
-        self.visited = Grid(size, False)
-        self.solution = Grid(size, False)
-        self.DEBUG = debug
+logger = logging.getLogger(__name__)
 
-    def generate(self, start_position=None, step_callback=None):
+class Maze:
+    def __init__(self, size: Vector, canvas_size: Vector, debug: bool = True) -> None:
+        self.size: Vector = size
+        self.canvas_size: Vector = canvas_size
+        self.south_walls: Grid = Grid(size, True)
+        self.east_walls: Grid = Grid(size, True)
+        self.visited: Grid = Grid(size, False)
+        self.solution: Grid = Grid(size, False)
+        self.debug_enabled: bool = debug
+
+    def generate(self, start_position: Optional[Vector] = None, step_callback: Optional[Callable[[], None]] = None) -> None:
         if start_position is None:
             start_position = Vector(0, 0)
 
@@ -22,7 +27,7 @@ class Maze:
         self.visited = Grid(self.size, False)
         self.solution = Grid(self.size, False)
 
-        stack = [start_position]
+        stack: list[Vector] = [start_position]
         self.visited[start_position] = True
 
         while stack:
@@ -37,25 +42,24 @@ class Maze:
             if step_callback is not None:
                 step_callback()
 
-    def in_bounds(self, pos):
+    def in_bounds(self, pos: Vector) -> bool:
         return self.visited.in_bounds(pos)
 
-    def all_positions(self):
-        for y in range(self.size.y):
-            for x in range(self.size.x):
-                yield Vector(x, y)
+    def all_positions(self) -> list[Vector]:
+        return [Vector(x, y) for y in range(self.size.y) for x in range(self.size.x)]
 
-    def cell_has_south_wall(self, pos):
+    def cell_has_south_wall(self, pos: Vector) -> bool:
         return self.south_walls[pos]
 
-    def cell_has_east_wall(self, pos):
+    def cell_has_east_wall(self, pos: Vector) -> bool:
         return self.east_walls[pos]
 
-    def debug(self, string):
-        if self.DEBUG: print(string)
+    def debug(self, string: str) -> None:
+        if self.debug_enabled:
+            logger.debug(string)
     
-    def next_neighbor(self, pos):
-        neighbors = []
+    def next_neighbor(self, pos: Vector) -> Optional[Vector]:
+        neighbors: list[Vector] = []
         if self.cell_has_east_neighbor(pos):
             neighbors.append(pos.east())
         if self.cell_has_west_neighbor(pos):
@@ -72,16 +76,16 @@ class Maze:
         self.debug("neighbor selected: " + str(selected))
         return selected
 
-    def cell_has_east_neighbor(self, cell):
+    def cell_has_east_neighbor(self, cell: Vector) -> bool:
         return self.in_bounds(cell.east()) and not self.visited[cell.east()]
 
-    def cell_has_west_neighbor(self, cell):
+    def cell_has_west_neighbor(self, cell: Vector) -> bool:
         return self.in_bounds(cell.west()) and not self.visited[cell.west()]
 
-    def cell_has_north_neighbor(self, cell):
+    def cell_has_north_neighbor(self, cell: Vector) -> bool:
         return self.in_bounds(cell.north()) and not self.visited[cell.north()]
 
-    def cell_has_south_neighbor(self, cell):
+    def cell_has_south_neighbor(self, cell: Vector) -> bool:
         return self.in_bounds(cell.south()) and not self.visited[cell.south()]
 
     def remove_wall_between(self, from_pos, to_pos):

@@ -1,12 +1,22 @@
-class Grid:
-    def __init__(self, size, value=False):
-        self.size = size
-        self.data = [[value for _ in range(size.x)] for _ in range(size.y)]
+from copy import deepcopy
+from typing import Any
 
-    def width(self):
+from vector import Vector
+
+class Grid:
+    def __init__(self, size: Vector, value: bool = False) -> None:
+        self.size: Vector = size
+        self.data: list[list[Any]] = self._create_grid(value)
+
+    def _create_grid(self, value: bool) -> list[list[Any]]:
+        return [[deepcopy(value) for _ in range(self.size.x)] for _ in range(self.size.y)]
+
+    @property
+    def width(self) -> int:
         return self.size.x
 
-    def height(self):
+    @property
+    def height(self) -> int:
         return self.size.y
 
     def _pos_to_coords(self, pos):
