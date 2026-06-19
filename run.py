@@ -1,4 +1,4 @@
-from easygraphics import pause, easy_run, close_graph, set_fill_color, set_caption, Color, RenderMode, set_color, clear_device, is_run, init_graph, delay_fps, set_render_mode
+from easygraphics import pause, easy_run, close_graph, set_caption, RenderMode, set_color, clear_device, is_run, init_graph, delay_fps, set_render_mode
 from math import floor
 import time
 
@@ -108,7 +108,7 @@ def main():
     set_render_mode(RenderMode.RENDER_MANUAL)
     set_caption("Maze builder")
     mainloop()
-    time.sleep(1)
+    pause()
     close_graph()
 
 if __name__ == "__main__":
