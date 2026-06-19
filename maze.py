@@ -58,22 +58,25 @@ class Maze:
             logger.debug(string)
     
     def next_neighbor(self, pos: Vector) -> Optional[Vector]:
-        neighbors: list[Vector] = []
-        if self.cell_has_east_neighbor(pos):
-            neighbors.append(pos.east())
-        if self.cell_has_west_neighbor(pos):
-            neighbors.append(pos.west())
-        if self.cell_has_north_neighbor(pos):
-            neighbors.append(pos.north())
-        if self.cell_has_south_neighbor(pos):
-            neighbors.append(pos.south())
+        neighbors = [
+            pos.east(),
+            pos.west(),
+            pos.north(),
+            pos.south(),
+        ]
+        candidates = [neighbor for neighbor in neighbors if self.in_bounds(neighbor) and not self.visited[neighbor]]
 
-        if not neighbors:
+        if not candidates:
             return None
 
-        selected = choice(neighbors)
+        self._shuffle_neighbors(candidates)
+        selected = candidates[0]
         self.debug("neighbor selected: " + str(selected))
         return selected
+
+    def _shuffle_neighbors(self, neighbors: list[Vector]) -> None:
+        from random import shuffle
+        shuffle(neighbors)
 
     def cell_has_east_neighbor(self, cell: Vector) -> bool:
         return self.in_bounds(cell.east()) and not self.visited[cell.east()]
