@@ -1,5 +1,5 @@
 from grid import Grid
-from random import randint
+from random import choice
 from math import floor
 
 class Map:
@@ -23,14 +23,21 @@ class Map:
     
     def next_neighbor(self, pos):
         neighbors = []
-        if self.cell_has_east_neighbor(pos): neighbors.append(pos.east())
-        if self.cell_has_west_neighbor(pos): neighbors.append(pos.west())
-        if self.cell_has_north_neighbor(pos): neighbors.append(pos.north())
-        if self.cell_has_south_neighbor(pos): neighbors.append(pos.south())
-        
-        next = randint(0, len(neighbors) - 1) 
-        self.debug("neighbor selected: " + str(neighbors[next]))
-        return neighbors[next]
+        if self.cell_has_east_neighbor(pos):
+            neighbors.append(pos.east())
+        if self.cell_has_west_neighbor(pos):
+            neighbors.append(pos.west())
+        if self.cell_has_north_neighbor(pos):
+            neighbors.append(pos.north())
+        if self.cell_has_south_neighbor(pos):
+            neighbors.append(pos.south())
+
+        if not neighbors:
+            return None
+
+        selected = choice(neighbors)
+        self.debug("neighbor selected: " + str(selected))
+        return selected
 
     def cell_has_east_neighbor(self, cell):
         if cell.x == self.size.x - 1:
