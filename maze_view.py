@@ -8,8 +8,14 @@ class MazeView:
         self.maze = maze
         self.canvas_size = canvas_size
         self.margin = margin
-        self.cell_width = floor(canvas_size.x / maze.size.x)
-        self.cell_height = floor(canvas_size.y / maze.size.y)
+
+    @property
+    def cell_width(self):
+        return floor(self.canvas_size.x / self.maze.size.x)
+
+    @property
+    def cell_height(self):
+        return floor(self.canvas_size.y / self.maze.size.y)
 
     def draw_cell(self, pos):
         x0 = pos.x * self.cell_width + self.margin
@@ -20,15 +26,9 @@ class MazeView:
         if self.maze.cell_has_south_wall(pos):
             set_color(Color.DARK_BLUE)
             draw_poly_line(x0, y1, x1, y1)
-        else:
-            set_color(Color.WHITE)
-            draw_poly_line(x0, y1, x1, y1)
 
         if self.maze.cell_has_east_wall(pos):
             set_color(Color.DARK_BLUE)
-            draw_poly_line(x1, y1, x1, y0)
-        else:
-            set_color(Color.WHITE)
             draw_poly_line(x1, y1, x1, y0)
 
     def draw_ball(self, pos):
@@ -41,13 +41,12 @@ class MazeView:
 
     def draw_result(self, pos):
         set_color(Color.RED)
-        set_fill_color(Color.RED)
-        margin = 2
+        margin = 4
         x0 = int(pos.x * self.cell_width + self.margin + margin)
         y0 = int(pos.y * self.cell_height + self.margin + margin)
         x1 = int(x0 + self.cell_width - 2 * margin)
         y1 = int(y0 + self.cell_height - 2 * margin)
-        draw_polygon(x0, y0, x0, y1, x1, y1, x1, y0)
+        draw_poly_line(x0, y0, x1, y0, x1, y1, x0, y1, x0, y0)
 
     def draw_border(self):
         set_color(Color.BLACK)
