@@ -22,7 +22,4 @@ class Vector:
 
     def west(self):
         return Vector(self.x - 1, self.y)
-
-    def in_list(self, sequence):
-        return self in sequence
           
