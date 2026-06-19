@@ -22,7 +22,7 @@ def debug(string):
 def mainloop():
     maze_size = Vector(15, 15)
     maze = Map(maze_size, CANVAS)
-    view = MazeView(maze)
+    view = MazeView(maze, CANVAS, margin=MARGIN)
 
     pos_i = Vector(0, 0)
     stack = [pos_i]
