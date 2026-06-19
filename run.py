@@ -28,26 +28,23 @@ def mainloop():
     stack = [start_position]
     maze.visited[start_position] = True
 
-    while is_run():
-        if len(stack) == 0:
+    while is_run() and stack:
+        current_position = stack.pop()
+        if maze.has_any_neighbor(current_position):
+            stack.append(current_position)
+            next_position = maze.next_neighbor(current_position)
+            maze.remove_wall_between(current_position, next_position)
+            maze.visited[next_position] = True
+            stack.append(next_position)
+
+        if STEPBYSTEP:
+            delay_fps(1000)
             clear_device()
             view.draw()
-            pause()
-            break
 
-        while len(stack) > 0:
-            current_position = stack.pop()
-            if maze.has_any_neighbor(current_position):
-                stack.append(current_position)
-                next_position = maze.next_neighbor(current_position)
-                maze.remove_wall_between(current_position, next_position)
-                maze.visited[next_position] = True
-                stack.append(next_position)
-
-            if STEPBYSTEP:
-                delay_fps(1000)
-                clear_device()
-                view.draw()
+    clear_device()
+    view.draw()
+    pause()
 
     debug("Solving maze")
     start_node = Vector(0, 0)

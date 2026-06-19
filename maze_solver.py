@@ -13,9 +13,8 @@ class MazeSolver:
         raise ValueError(f"Unsupported solver method: {method}")
 
     def _clear_solution(self):
-        for y in range(self.maze.size.y):
-            for x in range(self.maze.size.x):
-                self.maze.solution[Vector(x, y)] = False
+        for pos in self.maze.all_positions():
+            self.maze.solution[pos] = False
 
     def _solve_bfs(self, start: Vector, end: Vector):
         queue = deque([start])

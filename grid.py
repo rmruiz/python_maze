@@ -9,18 +9,22 @@ class Grid:
     def height(self):
         return self.size.y
 
-    def __getitem__(self, pos):
+    def _pos_to_coords(self, pos):
         if hasattr(pos, "x") and hasattr(pos, "y"):
-            return self.data[pos.y][pos.x]
-        x, y = pos
+            return pos.x, pos.y
+        return pos
+
+    def in_bounds(self, pos):
+        x, y = self._pos_to_coords(pos)
+        return 0 <= x < self.size.x and 0 <= y < self.size.y
+
+    def __getitem__(self, pos):
+        x, y = self._pos_to_coords(pos)
         return self.data[y][x]
 
     def __setitem__(self, pos, value):
-        if hasattr(pos, "x") and hasattr(pos, "y"):
-            self.data[pos.y][pos.x] = value
-        else:
-            x, y = pos
-            self.data[y][x] = value
+        x, y = self._pos_to_coords(pos)
+        self.data[y][x] = value
 
     def set(self, pos, value):
         self[pos] = value

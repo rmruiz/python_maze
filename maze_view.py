@@ -60,9 +60,7 @@ class MazeView:
 
     def draw(self):
         self.draw_border()
-        for x in range(self.maze.size.x):
-            for y in range(self.maze.size.y):
-                pos = Vector(x, y)
-                self.draw_cell(pos)
-                if self.maze.solution[pos]:
-                    self.draw_ball(pos)
+        for pos in self.maze.all_positions():
+            self.draw_cell(pos)
+            if self.maze.solution[pos]:
+                self.draw_result(pos)

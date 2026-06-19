@@ -1,6 +1,7 @@
 from grid import Grid
 from random import choice
 from math import floor
+from vector import Vector
 
 class Map:
     def __init__(self, size, canvas_size):
@@ -11,6 +12,14 @@ class Map:
         self.visited = Grid(size, False)
         self.solution = Grid(size, False)
         self.DEBUG = True
+
+    def in_bounds(self, pos):
+        return self.visited.in_bounds(pos)
+
+    def all_positions(self):
+        for y in range(self.size.y):
+            for x in range(self.size.x):
+                yield Vector(x, y)
 
     def cell_has_south_wall(self, pos):
         return self.south_walls[pos]
@@ -40,30 +49,22 @@ class Map:
         return selected
 
     def cell_has_east_neighbor(self, cell):
-        if cell.x == self.size.x - 1:
-            return False
-        return not self.visited[cell.east()]
+        return self.in_bounds(cell.east()) and not self.visited[cell.east()]
 
     def cell_has_west_neighbor(self, cell):
-        if cell.x == 0:
-            return False
-        return not self.visited[cell.west()]
+        return self.in_bounds(cell.west()) and not self.visited[cell.west()]
 
     def cell_has_north_neighbor(self, cell):
-        if cell.y == 0:
-            return False
-        return not self.visited[cell.north()]
+        return self.in_bounds(cell.north()) and not self.visited[cell.north()]
 
     def cell_has_south_neighbor(self, cell):
-        if cell.y == self.size.y - 1:
-            return False
-        return not self.visited[cell.south()]
+        return self.in_bounds(cell.south()) and not self.visited[cell.south()]
 
     def remove_wall_between(self, from_pos, to_pos):
-        if   to_pos.is_equal_to(from_pos.north()): self.destroy_north_wall(from_pos)
-        elif to_pos.is_equal_to(from_pos.south()): self.destroy_south_wall(from_pos)
-        elif to_pos.is_equal_to(from_pos.east()):  self.destroy_east_wall(from_pos)
-        elif to_pos.is_equal_to(from_pos.west()):  self.destroy_west_wall(from_pos)
+        if   to_pos == from_pos.north(): self.destroy_north_wall(from_pos)
+        elif to_pos == from_pos.south(): self.destroy_south_wall(from_pos)
+        elif to_pos == from_pos.east():  self.destroy_east_wall(from_pos)
+        elif to_pos == from_pos.west():  self.destroy_west_wall(from_pos)
         else: raise RuntimeError("ERROR: No match to remove wall!")
         return
 

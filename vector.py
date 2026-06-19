@@ -8,9 +8,6 @@ class Vector:
     def __str__(self):
         return f"[{self.x}, {self.y}]"
 
-    def is_equal_to(self, pos):
-        return pos is not None and self == pos
-
     def north(self):
         return Vector(self.x, self.y - 1)
 
