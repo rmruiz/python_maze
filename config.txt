@@ -1,0 +1,14 @@
+brew install readline xz
+brew install pyenv pyenv-virtualenv
+
+pyenv install -l
+pyenv install 3.11.15
+
+pyenv virtualenv 3.11.15 python_maze
+pyenv activate python_maze
+
+export PYENV_VIRTUALENV_DISABLE_PROMPT=1
+
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+
