@@ -4,9 +4,9 @@ from math import floor
 from map import Map
 from vector import Vector
 
-DEBUG = False
-STEPBYSTEP = False
-STEPBYSTEP2 = False
+DEBUG = True
+STEPBYSTEP = True
+STEPBYSTEP2 = True
 MARGIN = 5
 
 CANVAS = Vector(640, 480)
@@ -38,21 +38,22 @@ def draw_cell(pos):
         draw_poly_line(  x1,y1,  x1,y0  )
 
 def draw_ball(pos):
-    x0 = pos.x * maze.cell_width() + MARGIN + maze.cell_width()/2
-    y0 = pos.y * maze.cell_height() + MARGIN + maze.cell_height()/2
+    x0 = int(pos.x * maze.cell_width() + MARGIN + maze.cell_width() / 2)
+    y0 = int(pos.y * maze.cell_height() + MARGIN + maze.cell_height() / 2)
+    radius = int(min(maze.cell_width(), maze.cell_height()) / 3)
     set_color(Color.RED)
     set_fill_color(Color.RED)
-    draw_circle(x0, y0, min(maze.cell_width(), maze.cell_height())/3 )
+    draw_circle(x0, y0, radius)
 
 def draw_result(pos):
     set_color(Color.RED)
     set_fill_color(Color.RED)
     margin = 2
-    x0 = pos.x * maze.cell_width() + MARGIN + margin
-    y0 = pos.y * maze.cell_height() + MARGIN + margin
-    x1 = x0 + maze.cell_width() - 2*margin
-    y1 = y0 + maze.cell_height() - 2*margin
-    draw_polygon( x0,y0, x0,y1, x1,y1, x1,y0 )
+    x0 = int(pos.x * maze.cell_width() + MARGIN + margin)
+    y0 = int(pos.y * maze.cell_height() + MARGIN + margin)
+    x1 = int(x0 + maze.cell_width() - 2 * margin)
+    y1 = int(y0 + maze.cell_height() - 2 * margin)
+    draw_polygon(x0, y0, x0, y1, x1, y1, x1, y0)
 
 def draw():
     draw_border()
@@ -170,5 +171,6 @@ def main():
     mainloop()
     close_graph()
 
-easy_run(main)
+if __name__ == "__main__":
+    easy_run(main)
 
