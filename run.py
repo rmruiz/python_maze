@@ -12,6 +12,9 @@ STEPBYSTEP = False
 STEPBYSTEP2 = False
 MARGIN = 5
 
+# You can change this to "dfs", "prim", "kruskal", or "wilson" to see different algorithms in action
+MAZE_ALGORITHM = "dfs"
+
 CANVAS = Vector(640, 480)
 max_width = 640
 max_height = 480
@@ -32,9 +35,9 @@ def mainloop() -> None:
         view.draw()
 
     if STEPBYSTEP:
-        maze.generate(Vector(0, 0), step_callback=step)
+        maze.generate(Vector(0, 0), algorithm=MAZE_ALGORITHM, step_callback=step)
     else:
-        maze.generate(Vector(0, 0))
+        maze.generate(Vector(0, 0), algorithm=MAZE_ALGORITHM)
 
     clear_device()
     view.draw()
