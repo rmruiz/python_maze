@@ -2,7 +2,7 @@ from easygraphics import pause, easy_run, close_graph, set_caption, RenderMode, 
 from math import floor
 import time
 
-from map import Map
+from maze import Maze
 from maze_solver import MazeSolver
 from maze_view import MazeView
 from vector import Vector
@@ -21,26 +21,18 @@ def debug(string):
 
 def mainloop():
     maze_size = Vector(15, 15)
-    maze = Map(maze_size, CANVAS)
+    maze = Maze(maze_size, CANVAS)
     view = MazeView(maze, CANVAS, margin=MARGIN)
 
-    start_position = Vector(0, 0)
-    stack = [start_position]
-    maze.visited[start_position] = True
+    def step():
+        delay_fps(1000)
+        clear_device()
+        view.draw()
 
-    while is_run() and stack:
-        current_position = stack.pop()
-        if maze.has_any_neighbor(current_position):
-            stack.append(current_position)
-            next_position = maze.next_neighbor(current_position)
-            maze.remove_wall_between(current_position, next_position)
-            maze.visited[next_position] = True
-            stack.append(next_position)
-
-        if STEPBYSTEP:
-            delay_fps(1000)
-            clear_device()
-            view.draw()
+    if STEPBYSTEP:
+        maze.generate(Vector(0, 0), step_callback=step)
+    else:
+        maze.generate(Vector(0, 0))
 
     clear_device()
     view.draw()

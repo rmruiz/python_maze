@@ -3,15 +3,39 @@ from random import choice
 from math import floor
 from vector import Vector
 
-class Map:
-    def __init__(self, size, canvas_size):
+class Maze:
+    def __init__(self, size, canvas_size, debug=True):
         self.size = size
         self.canvas_size = canvas_size
         self.south_walls = Grid(size, True)
         self.east_walls = Grid(size, True)
         self.visited = Grid(size, False)
         self.solution = Grid(size, False)
-        self.DEBUG = True
+        self.DEBUG = debug
+
+    def generate(self, start_position=None, step_callback=None):
+        if start_position is None:
+            start_position = Vector(0, 0)
+
+        self.south_walls = Grid(self.size, True)
+        self.east_walls = Grid(self.size, True)
+        self.visited = Grid(self.size, False)
+        self.solution = Grid(self.size, False)
+
+        stack = [start_position]
+        self.visited[start_position] = True
+
+        while stack:
+            current_position = stack.pop()
+            if self.has_any_neighbor(current_position):
+                stack.append(current_position)
+                next_position = self.next_neighbor(current_position)
+                self.remove_wall_between(current_position, next_position)
+                self.visited[next_position] = True
+                stack.append(next_position)
+
+            if step_callback is not None:
+                step_callback()
 
     def in_bounds(self, pos):
         return self.visited.in_bounds(pos)
