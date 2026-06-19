@@ -64,5 +64,5 @@ class MazeView:
             for y in range(self.maze.size.y):
                 pos = Vector(x, y)
                 self.draw_cell(pos)
-                if self.maze.solucion.get(pos):
+                if self.maze.solution[pos]:
                     self.draw_ball(pos)

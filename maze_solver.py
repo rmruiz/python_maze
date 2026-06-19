@@ -15,7 +15,7 @@ class MazeSolver:
     def _clear_solution(self):
         for y in range(self.maze.size.y):
             for x in range(self.maze.size.x):
-                self.maze.solucion[Vector(x, y)] = False
+                self.maze.solution[Vector(x, y)] = False
 
     def _solve_bfs(self, start: Vector, end: Vector):
         queue = deque([start])
@@ -57,6 +57,6 @@ class MazeSolver:
         path.reverse()
 
         for pos in path:
-            self.maze.solucion[pos] = True
+            self.maze.solution[pos] = True
 
         return path

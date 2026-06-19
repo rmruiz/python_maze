@@ -8,8 +8,8 @@ class Map:
         self.canvas_size = canvas_size
         self.south_walls = Grid(size, True)
         self.east_walls = Grid(size, True)
-        self.visitado = Grid(size, False)
-        self.solucion = Grid(size, False)
+        self.visited = Grid(size, False)
+        self.solution = Grid(size, False)
         self.DEBUG = True
 
     def cell_has_south_wall(self, pos):
@@ -42,28 +42,28 @@ class Map:
     def cell_has_east_neighbor(self, cell):
         if cell.x == self.size.x - 1:
             return False
-        return not self.visitado[cell.east()]
+        return not self.visited[cell.east()]
 
     def cell_has_west_neighbor(self, cell):
         if cell.x == 0:
             return False
-        return not self.visitado[cell.west()]
+        return not self.visited[cell.west()]
 
     def cell_has_north_neighbor(self, cell):
         if cell.y == 0:
             return False
-        return not self.visitado[cell.north()]
+        return not self.visited[cell.north()]
 
     def cell_has_south_neighbor(self, cell):
         if cell.y == self.size.y - 1:
             return False
-        return not self.visitado[cell.south()]
+        return not self.visited[cell.south()]
 
-    def remove_wall_between(self, pos_i, pos_f):
-        if   pos_f.is_equal_to(pos_i.north()): self.destroy_north_wall(pos_i)
-        elif pos_f.is_equal_to(pos_i.south()): self.destroy_south_wall(pos_i)
-        elif pos_f.is_equal_to(pos_i.east()):  self.destroy_east_wall(pos_i)
-        elif pos_f.is_equal_to(pos_i.west()):  self.destroy_west_wall(pos_i)
+    def remove_wall_between(self, from_pos, to_pos):
+        if   to_pos.is_equal_to(from_pos.north()): self.destroy_north_wall(from_pos)
+        elif to_pos.is_equal_to(from_pos.south()): self.destroy_south_wall(from_pos)
+        elif to_pos.is_equal_to(from_pos.east()):  self.destroy_east_wall(from_pos)
+        elif to_pos.is_equal_to(from_pos.west()):  self.destroy_west_wall(from_pos)
         else: raise RuntimeError("ERROR: No match to remove wall!")
         return
 

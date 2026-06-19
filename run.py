@@ -24,9 +24,9 @@ def mainloop():
     maze = Map(maze_size, CANVAS)
     view = MazeView(maze, CANVAS, margin=MARGIN)
 
-    pos_i = Vector(0, 0)
-    stack = [pos_i]
-    maze.visitado[pos_i] = True
+    start_position = Vector(0, 0)
+    stack = [start_position]
+    maze.visited[start_position] = True
 
     while is_run():
         if len(stack) == 0:
@@ -36,13 +36,13 @@ def mainloop():
             break
 
         while len(stack) > 0:
-            pos_i = stack.pop()
-            if maze.has_any_neighbor(pos_i):
-                stack.append(pos_i)
-                pos_n = maze.next_neighbor(pos_i)
-                maze.remove_wall_between(pos_i, pos_n)
-                maze.visitado[pos_n] = True
-                stack.append(pos_n)
+            current_position = stack.pop()
+            if maze.has_any_neighbor(current_position):
+                stack.append(current_position)
+                next_position = maze.next_neighbor(current_position)
+                maze.remove_wall_between(current_position, next_position)
+                maze.visited[next_position] = True
+                stack.append(next_position)
 
             if STEPBYSTEP:
                 delay_fps(1000)
